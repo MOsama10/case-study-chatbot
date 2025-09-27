@@ -1,0 +1,3 @@
+# Sample case study document 
+This is a sample case study file. 
+Replace data\cases.docx with your actual Word document. 
