@@ -36,6 +36,10 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 EMBEDDING_BATCH_SIZE = 32
 MAX_EMBEDDING_RETRIES = 3
 
+# Model names (use full model path for Gemini)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-pro-latest")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 # Vector search configuration
 VECTOR_TOP_K = 5
 VECTOR_SIMILARITY_THRESHOLD = 0.7
@@ -69,7 +73,7 @@ GRADIO_SHARE = False
 
 # Logging configuration
 LOGGING_LEVEL = logging.INFO
-LOGGING_FORMAT = "%^(asctime^)s - %^(name^)s - %^(levelname^)s - %^(message^)s"
+LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # Configure logging
 logging.basicConfig(
@@ -77,13 +81,15 @@ logging.basicConfig(
     format=LOGGING_FORMAT,
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(STORAGE_ROOT / "chatbot.log")
+        logging.FileHandler(STORAGE_ROOT / "chatbot.log", encoding="utf-8")
     ]
 )
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a configured logger instance."""
     return logging.getLogger(name)
+
 
 def validate_config() -> None:
     """Validate configuration and raise errors for missing required settings."""
@@ -91,15 +97,28 @@ def validate_config() -> None:
         raise ValueError(
             "No API key found. Please set GEMINI_API_KEY or OPENAI_API_KEY in your .env file"
         )
-ECHO is off.
+
     if LLM_PROVIDER not in ["gemini", "openai"]:
         raise ValueError(f"Invalid LLM_PROVIDER: {LLM_PROVIDER}. Must be 'gemini' or 'openai'")
-ECHO is off.
-    if LLM_PROVIDER == "gemini" and not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY required when LLM_PROVIDER=gemini")
-ECHO is off.
-    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY required when LLM_PROVIDER=openai")
+
+    if LLM_PROVIDER == "gemini":
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY required when LLM_PROVIDER=gemini")
+        if "gemini" not in GEMINI_MODEL:
+            raise ValueError(
+                f"Unsupported GEMINI_MODEL: {GEMINI_MODEL}. "
+                "Must contain 'gemini' (e.g., 'models/gemini-pro-latest')"
+            )
+
+
+    if LLM_PROVIDER == "openai":
+        if not OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY required when LLM_PROVIDER=openai")
+        if not OPENAI_MODEL.startswith("gpt-"):
+            raise ValueError(
+                f"Unsupported OPENAI_MODEL: {OPENAI_MODEL}. Must start with 'gpt-'"
+            )
+
 
 # Validate on import
 validate_config()
