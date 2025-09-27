@@ -27,7 +27,9 @@ from .config import (
     LLM_TEMPERATURE, LLM_MAX_TOKENS, LLM_TIMEOUT
 )
 from .retriever import get_retriever, retrieve_for_query
-
+from .professional_prompts import get_prompt_manager
+from .response_formatter import get_response_formatter
+from .direct_answer_handler import get_direct_answer_handler, handle_direct_question
 logger = get_logger(__name__)
 
 
@@ -183,36 +185,38 @@ Please provide a detailed analysis based on the case study context above. Includ
 Analysis:"""
 
     def build_prompt(self, query: str, context_data: Dict[str, Any]) -> str:
-        """
-        Build appropriate prompt based on query type.
+        """Build professional prompt based on query type."""
         
-        Args:
-            query: User query
-            context_data: Retrieved context information
-            
-        Returns:
-            Formatted prompt string
-        """
-        query_type = context_data['query_type']
-        context_text = context_data['context_text']
+        # Get professional prompt manager
+        prompt_manager = get_prompt_manager()
         
-        if query_type == 'analysis':
-            template = self.analysis_template
+        # Classify query type
+        query_type = self._classify_business_query(query)
+        
+        # Enhance context with metadata
+        enhanced_context = prompt_manager.enhance_context_with_metadata(context_data)
+        enhanced_context['query'] = query
+        enhanced_context['query_type'] = query_type
+        
+        # Generate professional prompt
+        return prompt_manager.get_professional_prompt(query_type, enhanced_context)
+
+    def _classify_business_query(self, query: str) -> str:
+        """Classify query for appropriate professional response."""
+        query_lower = query.lower()
+        
+        if any(word in query_lower for word in ['analyze', 'analysis', 'examine']):
+            return 'analysis'
+        elif any(word in query_lower for word in ['recommend', 'suggest', 'strategy']):
+            return 'recommendation'
+        elif any(word in query_lower for word in ['compare', 'versus', 'vs']):
+            return 'comparison'
+        elif any(word in query_lower for word in ['trend', 'pattern', 'future']):
+            return 'trend'
+        elif any(word in query_lower for word in ['implement', 'execute', 'deploy']):
+            return 'implementation'
         else:
-            template = self.qa_template
-        
-        # Add source information for better citation
-        sources_info = "\n".join([
-            f"Source {i+1} (ID: {source['id']}): {source['text'][:200]}..."
-            for i, source in enumerate(context_data['sources'][:5])
-        ])
-        
-        enhanced_context = f"{context_text}\n\nSource Details:\n{sources_info}"
-        
-        return template.format(
-            context=enhanced_context,
-            query=query
-        )
+            return 'general'
     
     def extract_confidence(self, response: str) -> float:
         """
@@ -255,31 +259,56 @@ Analysis:"""
         return min(max_confidence, 1.0)
     def answer_query(self, query: str, user_context: Optional[Dict[str, Any]] = None) -> AgentResponse:
         """
-        Main method to answer user queries.
-        
-        Args:
-            query: User question or request
-            user_context: Optional user context (conversation history, etc.)
-            
-        Returns:
-            Structured AgentResponse
+        Enhanced query answering with direct answer detection.
         """
         start_time = time.time()
         
         try:
             logger.info(f"Processing query: {query}")
             
-            # Retrieve relevant context
+            # Retrieve relevant context first
             context_data = retrieve_for_query(query)
             
-            # Ensure KG results are valid
-            kg_results = context_data.get('kg_results', [])
-            if not isinstance(kg_results, list):
-                logger.warning(f"KG results invalid: {kg_results}. Using empty list instead.")
-                kg_results = []
-            context_data['kg_results'] = kg_results
+            # Check if this is a direct question that needs a simple answer
+            direct_handler = get_direct_answer_handler()
             
-            # Build prompt
+            if direct_handler.is_direct_question(query):
+                logger.info("Detected direct question - providing focused answer")
+                
+                # Get direct answer
+                direct_response = handle_direct_question(query, context_data)
+                
+                if direct_response:
+                    # Calculate confidence for direct answer
+                    analysis = direct_handler.analyze_context_for_answer(query, context_data)
+                    confidence = analysis['confidence']
+                    
+                    # Prepare sources for direct response
+                    sources = []
+                    for source in context_data.get('sources', []):
+                        sources.append({
+                            'id': source.get('id', 'unknown'),
+                            'text': source.get('text', '')[:200] + "..." if len(source.get('text','')) > 200 else source.get('text',''),
+                            'score': source.get('score', 0.0),
+                            'type': source.get('source_type', 'case_study')
+                        })
+                    
+                    processing_time = time.time() - start_time
+                    
+                    return AgentResponse(
+                        answer=direct_response,
+                        sources=sources,
+                        kg_nodes=context_data.get('kg_results', []),
+                        raw_llm_response=direct_response,
+                        query_type="direct_answer",
+                        confidence=confidence,
+                        processing_time=processing_time
+                    )
+            
+            # If not a direct question, proceed with normal comprehensive analysis
+            # ... (rest of your existing answer_query method)
+            
+            # Build prompt for comprehensive analysis
             prompt = self.build_prompt(query, context_data)
             
             # Generate LLM response
@@ -298,8 +327,7 @@ Analysis:"""
                     'type': source.get('source_type', 'unknown')
                 })
             
-            # Extract KG nodes mentioned safely
-            kg_nodes = [node for node in kg_results if isinstance(node, str)]
+            kg_nodes = [node for node in context_data.get('kg_results', []) if isinstance(node, str)]
             
             processing_time = time.time() - start_time
             
@@ -308,7 +336,7 @@ Analysis:"""
                 sources=sources,
                 kg_nodes=kg_nodes,
                 raw_llm_response=llm_response,
-                query_type=context_data.get('query_type', 'unknown'),
+                query_type=context_data.get('query_type', 'comprehensive'),
                 confidence=confidence,
                 processing_time=processing_time
             )

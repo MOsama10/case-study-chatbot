@@ -9,11 +9,40 @@ import re
 import numpy as np
 from collections import defaultdict, Counter
 
-from .embeddings import get_embedding_manager, search_similar
-from .knowledge_graph import get_knowledge_graph, query_kg
 from .config import get_logger, VECTOR_TOP_K, VECTOR_SIMILARITY_THRESHOLD
+from .embeddings import get_embedding_manager, search_similar
+
+# Knowledge Graph import with enhanced fallback
+try:
+    from .enhanced_knowledge_graph import get_enhanced_knowledge_graph, query_enhanced_kg
+    ENHANCED_KG_AVAILABLE = True
+except ImportError:
+    ENHANCED_KG_AVAILABLE = False
+
+try:
+    from .knowledge_graph import get_knowledge_graph, query_kg
+    KG_AVAILABLE = True
+except ImportError:
+    # fallback if get_knowledge_graph not available
+    try:
+        from .knowledge_graph import load_kg, query_kg
+        def get_knowledge_graph():
+            return load_kg()
+        KG_AVAILABLE = True
+    except ImportError:
+        # fallback dummy functions
+        import networkx as nx
+        def get_knowledge_graph():
+            return nx.Graph()
+
+        def query_kg(query, kg=None, include_neighbors=True):
+            return []
+
+        KG_AVAILABLE = False
+
 
 logger = get_logger(__name__)
+
 
 
 class QueryProcessor:
@@ -247,16 +276,18 @@ class HybridRetriever:
     def __init__(self):
         """Initialize retriever."""
         self.embedding_manager = get_embedding_manager()
-        self.knowledge_graph = get_knowledge_graph()
+        
+        # Safe knowledge graph initialization
+        try:
+            self.knowledge_graph = get_knowledge_graph()
+        except Exception as e:
+            logger.warning(f"Failed to load knowledge graph: {e}")
+            import networkx as nx
+            self.knowledge_graph = nx.Graph()  # Empty graph as fallback
+        
         self.query_processor = QueryProcessor()
         self.document_filter = DocumentFilter()
         
-        # Retrieval strategy weights
-        self.strategy_weights = {
-            'vector_search': 0.6,
-            'kg_search': 0.3,
-            'keyword_search': 0.1
-        }
     
     def vector_search(self, query: str, top_k: int = VECTOR_TOP_K, filters: Optional[Dict] = None) -> List[Tuple[str, float, str]]:
         """

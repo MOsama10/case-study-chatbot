@@ -106,33 +106,60 @@ class ChatbotUI:
             return "", history + [[message, error_response]]
     
     def _format_response(self, response: Dict) -> str:
-        """Format the chatbot response for display."""
+        """Format the chatbot response for display with direct answer handling."""
         answer = response['answer']
         sources = response['sources']
         confidence = response['confidence']
         processing_time = response['processing_time']
+        query_type = response.get('query_type', 'general')
         
-        # Main answer
-        formatted = answer
+        # Handle direct answers differently
+        if query_type == 'direct_answer':
+            # More concise formatting for direct answers
+            formatted = answer
+            
+            # Add brief metadata for direct answers
+            formatted += f"\n\n---"
+            formatted += f"\n**Quick Answer Metrics:**"
+            formatted += f"\n• Confidence: {confidence:.0%}"
+            formatted += f"\n• Sources: {len(sources)} case studies"
+            formatted += f"\n• Response time: {processing_time:.1f}s"
+            
+            # Show top 2 sources for direct answers
+            if sources:
+                formatted += f"\n\n**Key References:**"
+                for i, source in enumerate(sources[:2], 1):
+                    source_text = source['text'][:100] + "..." if len(source['text']) > 100 else source['text']
+                    formatted += f"\n{i}. {source_text}"
+            
+            return formatted
         
-        # Add confidence and timing info
-        formatted += f"\n\n---\n"
-        formatted += f"**Confidence:** {confidence:.1%} | **Processing Time:** {processing_time:.2f}s"
-        
-        # Add sources if available
-        if sources:
-            formatted += f"\n\n**Sources:**"
-            for i, source in enumerate(sources[:3], 1):  # Show top 3 sources
-                source_type = source.get('type', 'document')
-                source_text = source['text'][:150] + "..." if len(source['text']) > 150 else source['text']
-                formatted += f"\n{i}. [{source_type.upper()}] {source_text}"
-        
-        # Add KG info if available
-        kg_nodes = response.get('kg_nodes', [])
-        if kg_nodes:
-            formatted += f"\n\n**Related Knowledge:** {len(kg_nodes)} connections found"
-        
-        return formatted
+        else:
+            # Comprehensive formatting for detailed analysis
+            formatted = answer
+            
+            # Add detailed metadata for comprehensive responses
+            formatted += f"\n\n---"
+            formatted += f"\n**Business Analysis Metrics:**"
+            formatted += f"\n• Analysis Confidence: {confidence:.0%}"
+            formatted += f"\n• Processing Time: {processing_time:.2f}s"
+            formatted += f"\n• Evidence Sources: {len(sources)} case studies"
+            formatted += f"\n• Response Type: {query_type.title().replace('_', ' ')}"
+            
+            # Add comprehensive source information
+            if sources:
+                formatted += f"\n\n**Case Study References:**"
+                for i, source in enumerate(sources[:3], 1):
+                    source_type = source.get('type', 'Case Study')
+                    score = source.get('score', 0)
+                    formatted += f"\n{i}. [{source_type.upper()}] Relevance: {score:.0%}"
+            
+            # Add KG info if available
+            kg_nodes = response.get('kg_nodes', [])
+            if kg_nodes:
+                formatted += f"\n• Knowledge connections: {len(kg_nodes)} found"
+            
+            return formatted
     
     def clear_conversation(self) -> List[List[str]]:
         """Clear the current conversation."""
