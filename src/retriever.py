@@ -9,8 +9,8 @@
 # import numpy as np
 # from collections import defaultdict, Counter
 
-# from .config import get_logger, VECTOR_TOP_K, VECTOR_SIMILARITY_THRESHOLD
-# from .embeddings import get_embedding_manager, search_similar
+# from src.config import get_logger, VECTOR_TOP_K, VECTOR_SIMILARITY_THRESHOLD
+# from src.embeddings import get_embedding_manager, search_similar
 
 # # Knowledge Graph import with enhanced fallback
 # try:
@@ -20,12 +20,12 @@
 #     ENHANCED_KG_AVAILABLE = False
 
 # try:
-#     from .knowledge_graph import get_knowledge_graph, query_kg
+#     from src.knowledge_graph import get_knowledge_graph, query_kg
 #     KG_AVAILABLE = True
 # except ImportError:
 #     # fallback if get_knowledge_graph not available
 #     try:
-#         from .knowledge_graph import load_kg, query_kg
+#         from src.knowledge_graph import load_kg, query_kg
 #         def get_knowledge_graph():
 #             return load_kg()
 #         KG_AVAILABLE = True
@@ -783,16 +783,16 @@ import re
 import numpy as np
 from collections import defaultdict
 
-from .config import get_logger, VECTOR_TOP_K, VECTOR_SIMILARITY_THRESHOLD
-from .embeddings import get_embedding_manager, search_similar
+from src.config import get_logger, VECTOR_TOP_K, VECTOR_SIMILARITY_THRESHOLD
+from src.embeddings import get_embedding_manager, search_similar
 
 # Knowledge Graph import with fallback
 try:
-    from .knowledge_graph import get_knowledge_graph, query_kg
+    from src.knowledge_graph import get_knowledge_graph, query_kg
     KG_AVAILABLE = True
 except ImportError:
     try:
-        from .knowledge_graph import load_kg, query_kg
+        from src.knowledge_graph import load_kg, query_kg
         def get_knowledge_graph():
             return load_kg()
         KG_AVAILABLE = True

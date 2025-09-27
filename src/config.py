@@ -36,7 +36,7 @@ OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
 LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "gemini").lower()
 
 # Model names
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-pro")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-pro-latest")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # -----------------------------

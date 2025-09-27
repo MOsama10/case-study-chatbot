@@ -9,8 +9,8 @@ from typing import List, Dict, Any, Union
 import networkx as nx
 import pickle
 
-from .config import get_logger, KG_DIR, DATA_ROOT
-from .data_loader import load_multiple_docx
+from src.config import get_logger, KG_DIR, DATA_ROOT
+from src.data_loader import load_multiple_docx
 
 logger = get_logger(__name__)
 

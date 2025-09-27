@@ -4,7 +4,7 @@
 
 # import re
 # from typing import Dict, Any, Optional, List
-# from .config import get_logger
+# from src.config import get_logger
 
 # logger = get_logger(__name__)
 
@@ -290,7 +290,7 @@ Focused on providing clear, direct answers from legal documents.
 
 import re
 from typing import Dict, Any, Optional, List
-from .config import get_logger
+from src.config import get_logger
 
 logger = get_logger(__name__)
 

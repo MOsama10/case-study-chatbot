@@ -9,11 +9,11 @@
 # # import json
 # # from pathlib import Path
 
-# # from .config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
-# # from .chatbot import handle_message, get_session_info, clear_user_session
-# # from .embeddings import build_and_save_embeddings, load_index
-# # from .knowledge_graph import load_kg, build_kg, save_kg
-# # from .data_loader import load_docx
+# # from src.config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
+# # from src.chatbot import handle_message, get_session_info, clear_user_session
+# # from src.embeddings import build_and_save_embeddings, load_index
+# # from src.knowledge_graph import load_kg, build_kg, save_kg
+# # from src.data_loader import load_docx
 
 # # logger = get_logger(__name__)
 
@@ -62,7 +62,7 @@
 # #             build_and_save_embeddings(doc_path)
             
 # #             # Build knowledge graph
-# #             from .knowledge_graph import build_kg
+# #             from src.knowledge_graph import build_kg
 # #             build_kg(items)
 # #             save_kg()
             
@@ -327,7 +327,7 @@
     
 # #     def _get_llm_provider(self) -> str:
 # #         """Get current LLM provider name."""
-# #         from .config import LLM_PROVIDER
+# #         from src.config import LLM_PROVIDER
 # #         return LLM_PROVIDER.title()
     
 # #     def launch(self, **kwargs) -> None:
@@ -385,11 +385,11 @@
 # from pathlib import Path
 # import random
 
-# from .config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
-# from .chatbot import handle_message, get_session_info, clear_user_session
-# from .embeddings import build_and_save_embeddings, load_index
-# from .knowledge_graph import load_kg, build_kg, save_kg
-# from .data_loader import load_docx
+# from src.config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
+# from src.chatbot import handle_message, get_session_info, clear_user_session
+# from src.embeddings import build_and_save_embeddings, load_index
+# from src.knowledge_graph import load_kg, build_kg, save_kg
+# from src.data_loader import load_docx
 
 # logger = get_logger(__name__)
 
@@ -1065,7 +1065,7 @@
     
 #     def _get_llm_provider(self) -> str:
 #         """Get current LLM provider name with emoji."""
-#         from .config import LLM_PROVIDER
+#         from src.config import LLM_PROVIDER
 #         provider_map = {
 #             'gemini': '🔮 Gemini',
 #             'openai': '🤖 OpenAI',
@@ -1117,7 +1117,7 @@
 #         print("🔧 Setting up environment...")
         
 #         # Check for API keys
-#         from .config import GEMINI_API_KEY, OPENAI_API_KEY, LLM_PROVIDER
+#         from src.config import GEMINI_API_KEY, OPENAI_API_KEY, LLM_PROVIDER
         
 #         if not GEMINI_API_KEY and not OPENAI_API_KEY:
 #             print("""
@@ -1225,10 +1225,10 @@ import logging
 import time
 from pathlib import Path
 
-from .config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
-from .chatbot import handle_message, get_session_info, clear_user_session
-from .embeddings import build_and_save_embeddings, load_index
-from .knowledge_graph import load_kg, build_kg, save_kg
+from src.config import get_logger, GRADIO_PORT, GRADIO_SHARE, DATA_ROOT
+from src.chatbot import handle_message, get_session_info, clear_user_session
+from src.embeddings import build_and_save_embeddings, load_index
+from src.knowledge_graph import load_kg, build_kg, save_kg
 
 logger = get_logger(__name__)
 
